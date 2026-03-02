@@ -1,0 +1,203 @@
+version: '3.8'
+
+networks:
+  dmh-network:
+    driver: bridge
+    name: dmh-network
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0.6
+    container_name: keycloak
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://mysql:3306/keycloak_db
+      KC_DB_USERNAME: root
+      KC_DB_PASSWORD: admin
+
+      KC_HOSTNAME_STRICT: "false"
+      KEYCLOAK_IMPORT: /opt/keycloak/data/import/dmh-realm.json
+    volumes:
+      - ./dmh-realm.json:/opt/keycloak/data/import/dmh-realm.json
+    networks:
+      - dmh-network
+    command:
+      - start-dev
+      - --import-realm
+    ports:
+      - 8080:8080
+
+  mysql:
+    image: mysql:8.0.33
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 10s
+      retries: 10
+    networks:
+      - dmh-network
+    ports:
+      - 3307:3306
+
+  eureka-server:
+    build: eureka-server
+    mem_limit: 512m
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8761/ || exit 1" ]
+      timeout: 10s
+      retries: 10
+    networks:
+      - dmh-network
+    ports:
+      - 8761:8761
+
+  config-server:
+    build: config-server
+    mem_limit: 512m
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8888/actuator/health || exit 1" ]
+      timeout: 10s
+      retries: 3
+    networks:
+      - dmh-network
+    volumes:
+        - ./ssh/known_hosts:/root/.ssh/known_hosts:ro
+        - ./ssh/id_ed25519:/root/.ssh/id_ed25519:ro
+    ports:
+      - 8888:8888
+    environment:
+      - SPRING_APPLICATION_NAME=config-server
+      - SERVER_PORT=8888
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=git@github.com:ptrvio/config-server.git
+      - EUREKA_INSTANCE_HOSTNAME=config-server
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_PRIVATE_KEY_PATH=/root/.ssh/id_ed25519
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_KNOWN_HOSTS_FILE=/root/.ssh/known_hosts
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_STRICT_HOST_KEY_CHECKING=true
+  gateway:
+    build: gateway
+    mem_limit: 512m
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      SERVER_URL: http://keycloak:8080/realms/dh-money-users/protocol/openid-connect/certs
+      OPTIONAL_CONFIG_SERVER: optional:configserver:http://config-server:8888
+      SPRING_PROFILES_ACTIVE: prod
+    networks:
+      - dmh-network
+    ports:
+      - 8084:8084
+
+  users-service:
+    build: users-service
+    mem_limit: 512m
+    depends_on:
+      config-server:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/users_service_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+      DB_USER: root
+      DB_PASSWORD: admin
+      DB_DRIVER: com.mysql.cj.jdbc.Driver
+      REALM_NAME: dh-money-users
+      CLIENT_ID: api-dh-money
+      CLIENT_SECRET: 2bgKXNvbhtpbEUux2QmNfUev6D5hzqA4
+      OPTIONAL_CONFIG_SERVER: optional:configserver:http://config-server:8888
+      SPRING_PROFILES_ACTIVE: prod
+    restart: always
+    networks:
+      - dmh-network
+    ports:
+      - 8081:8081
+
+  accounts-service:
+    build: accounts-service
+    mem_limit: 512m
+    depends_on:
+      config-server:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/accounts_service_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+      DB_USER: root
+      DB_PASSWORD: admin
+      DB_DRIVER: com.mysql.cj.jdbc.Driver
+      REALM_NAME: dh-money-users
+      CLIENT_ID: api-dh-money
+      CLIENT_SECRET: 2bgKXNvbhtpbEUux2QmNfUev6D5hzqA4
+      OPTIONAL_CONFIG_SERVER: optional:configserver:http://config-server:8888
+      SPRING_PROFILES_ACTIVE: prod
+    restart: always
+    networks:
+      - dmh-network
+    ports:
+      - 8082:8082
+
+  cards-service:
+    build: cards-service
+    mem_limit: 512m
+    depends_on:
+      config-server:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/cards_service_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+      DB_USER: root
+      DB_PASSWORD: admin
+      DB_DRIVER: com.mysql.cj.jdbc.Driver
+      OPTIONAL_CONFIG_SERVER: optional:configserver:http://config-server:8888
+      SPRING_PROFILES_ACTIVE: prod
+    restart: always
+    networks:
+      - dmh-network
+    ports:
+      - 8085:8085
+
+  transactions-service:
+    build: transactions-service
+    mem_limit: 512m
+    depends_on:
+      config-server:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/transactions_service_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+      DB_USER: root
+      DB_PASSWORD: admin
+      DB_DRIVER: com.mysql.cj.jdbc.Driver
+      OPTIONAL_CONFIG_SERVER: optional:configserver:http://config-server:8888
+      SPRING_PROFILES_ACTIVE: prod
+    restart: always
+    networks:
+      - dmh-network
+    ports:
+      - 8083:8083
+volumes:
+  mysql_data:

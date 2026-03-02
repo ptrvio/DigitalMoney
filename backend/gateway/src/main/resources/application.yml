@@ -1,0 +1,175 @@
+spring:
+  application:
+    name: gateway
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  config:
+    import: ${OPTIONAL_CONFIG_SERVER:optional:configserver:http://localhost:8888}
+    #import: optional:configserver:http://config-server:8888
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: http://localhost:3000
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - Origin
+              - X-Requested-With
+              - Content-Type
+              - Accept
+              - Authorization
+            allowCredentials: true
+            maxAge: 3600
+      routes:
+        #REGISTER USER
+        - id: users-service-register
+          uri: lb://users-service
+          predicates:
+            - Path=/register
+          filters:
+            - RewritePath=/register, /users/register
+        #LOGIN USER
+        - id: users-service-login
+          uri: lb://users-service
+          predicates:
+            - Path=/login
+          filters:
+            - RewritePath=/login, /users/login
+        #GET ACCOUNT BY USERID
+        - id: accounts-service-userid
+          uri: lb://accounts-service
+          predicates:
+            - Path=/users/{id}/accounts
+            - Method=GET
+          filters:
+            - RewritePath=/users/[^/]+/accounts, /accounts/user-information
+        #GET ACTIVITIES
+        - id: accounts-service-allActivities
+          uri: lb://accounts-service
+          predicates:
+            - Path=/users/${userId}/activities
+            - Method=GET
+          filters:
+            - RewritePath=/users/[^/]+/activities, /accounts/activity
+        #GET USER ACTIVITY
+        - id: accounts-service-userActivity
+          uri: lb://accounts-service
+          predicates:
+            - Path=/users/{userId}/activities/{activityId}
+            - Method=GET
+          filters:
+            - RewritePath=/users/[^/]+/activities/(?<activityId>[^/]+)+, /accounts/activity/${activityId}
+        #DEPOSIT OR TRANSFER
+        - id: accounts-service-depositOrTransferMoney
+          uri: lb://accounts-service
+          predicates:
+            - Path=/users/{id}/activities
+            - Method=POST
+          filters:
+            - RewritePath=/users/[^/]+/activities, /accounts/register-transaction
+        #ALLTRANSACTIONS / LASTFIVETRANSACTIONS
+        - id: accounts-service-allTransactions
+          uri: lb://accounts-service
+          predicates:
+            - Path=/users/{id}/activities
+            - Method=GET
+          filters:
+            - RewritePath=/users/[^/]+/activities, /accounts/activities
+        #UPDATE ALIAS BY USERID
+        - id: users-service-updateAlias
+          uri: lb://users-service
+          predicates:
+            - Path=/users/{id}/accounts/{accountId}
+            - Method=PATCH
+          filters:
+            - RewritePath=/users/[^/]+/accounts/[^/]+, /users/update-alias
+        #LIST ALL CARDS
+        - id: getAll-user-cards
+          uri: lb://accounts-service
+          predicates:
+            - Path=/users/{userId}/cards
+            - Method=GET
+          filters:
+            - RewritePath=/users/[^/]+/cards, /accounts/cards
+        #CREATE CARD
+        - id: post-user-card
+          uri: lb://accounts-service
+          predicates:
+            - Path=/users/{userId}/cards
+            - Method=POST
+          filters:
+            - RewritePath=/users/[^/]+/cards, /accounts/register-card
+        #GET CARD BY ID
+        - id: get-user-card
+          uri: lb://accounts-service
+          predicates:
+            - Path=/users/{userId}/cards/{cardId}
+            - Method=GET
+          filters:
+            - RewritePath=/users/[^/]+/cards/(?<cardId>[^/]+)+, /accounts/card/${cardId}
+        #DELETE CARD BY ID
+        - id: delete-user-card
+          uri: lb://accounts-service
+          predicates:
+            - Path=/users/{userId}/cards/{cardId}
+            - Method=DELETE
+          filters:
+            - RewritePath=/users/[^/]+/cards/(?<cardId>[^/]+)+, /accounts/delete-card/${cardId}
+        #GET ALL ACCOUNT
+        - id: accounts-service-all
+          uri: lb://accounts-service
+          predicates:
+            - Path=/accounts
+            - Method=GET
+          filters:
+            - RewritePath=/accounts, /accounts/all
+        #GET USER BY KCID
+        - id: users-service-userid
+          uri: lb://users-service
+          predicates:
+            - Path=/users/{id}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  info:
+    env:
+      enabled: true
+info:
+  app:
+    name: Gateway
+    description: API gateway
+    version: 1.0.0
+
+eureka:
+  instance:
+    #hostname: gateway
+    #hostname: localhost
+    #ip-address: 127.0.0.1
+    prefer-ip-address: false
+    #statusPageUrlPath: http://gateway:8084/actuator/info
+    #healthCheckUrlPath: http://gateway:8084/actuator/info
+    statusPageUrlPath: http://localhost:8084/actuator/info
+    healthCheckUrlPath: http://localhost:8084/actuator/info
+  client:
+    serviceUrl:
+      #defaultZone: http://eureka-server:8761/eureka
+      defaultZone: http://localhost:8761/eureka
+dh:
+  keycloak:
+    serverUrl: ${SERVER_URL}
+server:
+  port: 8084

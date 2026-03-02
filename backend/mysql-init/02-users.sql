@@ -1,0 +1,10 @@
+CREATE USER 'keycloak'@'%' IDENTIFIED BY 'keycloak123';
+GRANT ALL PRIVILEGES ON keycloak_db.* TO 'keycloak'@'%';
+CREATE USER 'pablo'@'%' IDENTIFIED BY '1234';
+GRANT ALL PRIVILEGES ON users_service_db.* TO 'pablo@'%';
+CREATE USER 'pablo'@'%' IDENTIFIED BY '1234';
+GRANT ALL PRIVILEGES ON accounts_service_db.* TO 'pablo'@'%';
+CREATE USER 'pablo'@'%' IDENTIFIED BY '1234';
+GRANT ALL PRIVILEGES ON cards_service_db.* TO 'pablo'@'%';
+CREATE USER 'pablo'@'%' IDENTIFIED BY '1234';
+GRANT ALL PRIVILEGES ON transactions_service_db.* TO 'pablo'@'%';
