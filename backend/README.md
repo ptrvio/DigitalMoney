@@ -6,7 +6,7 @@ Además se utilizó otras tecnologías como: Git, MySQL, Docker, Postman.
 
 ## Arquitectura del proyecto
 
-![Arquitectura del sistema](docs/arquitectura.png)
+![Arquitectura del sistema](docs/arquitectura_proyecto.png)
 
 ## Como correr el proyecto Local
 
