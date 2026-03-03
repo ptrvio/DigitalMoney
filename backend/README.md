@@ -13,7 +13,7 @@ Además se utilizó otras tecnologías como: Git, MySQL, Docker, Postman.
 ## Como correr el proyecto Local
 
 ### 1. Base de Datos
-1. Correr **MySQL Workbench**
+1. Instalar **MySQL 8.0** y correr **MySQL Workbench**
     - Versión: 8.0.43 (build 5324808 CE)
 
 ### 2. Keycloak
