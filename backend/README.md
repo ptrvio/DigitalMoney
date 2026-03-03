@@ -8,6 +8,99 @@ Además se utilizó otras tecnologías como: Git, MySQL, Docker, Postman.
 
 ![Arquitectura del sistema](docs/arquitectura.png)
 
+## Como correr el proyecto Local
+
+### 1. Base de Datos
+1. Correr **MySQL Workbench**
+    - Versión: 8.0.43 (build 5324808 CE)
+
+### 2. Keycloak
+2. Correr **Keycloak**
+    - Ubicación: `../keycloak-25.0.6/bin`
+    - Comando:
+      ```bash
+      ./kc.sh start-dev
+      ```
+    - Versión: 25.0.6
+
+### 3. Backend - Spring Boot 3.1.10
+3. Abrir el proyecto en **IntelliJ IDEA 2024.3.7 CE** y levantar los servicios en el siguiente orden:
+
+    1. Lanzar **Eureka**
+    2. Lanzar **Config Server**
+    3. Lanzar **Gateway**
+    4. Lanzar **Users Service**
+    5. Lanzar **Accounts Service**
+    6. Lanzar **Cards Service**
+    7. Lanzar **Transactions Service**
+
+### 4. Frontend
+4. Lanzar el frontend:
+    - Abrir el proyecto en **VSCode**
+    - Ejecutar en la terminal dentro de la carpeta `frontend`:
+      ```bash
+      npm start
+
+## Como correr el proyecto en Docker
+
+
+### 1. Docker
+1. Correr **Docker Desktop**
+    - Ubicación dentro del directorio raiz del proyecto: `/backend/..`
+    - Comando en terminal:
+      ```bash
+      docker-compose build --no-cache
+      ```
+    - luego:
+      ```bash
+      docker-compose up
+      ```
+
+
+## Variables de entorno
+
+### Users Service
+
+- CLIENT_ID=api-dh-money
+- CLIENT_SECRET=XB3V2oeWqwZz9geABygfkfo2t2VxipSu
+- DB_DRIVER=com.mysql.cj.jdbc.Driver
+- DB_PASSWORD=8unkercordobA
+- DB_URL=jdbc:mysql://localhost:3306/users_service_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+- DB_USER=root
+- REALM_NAME=dh-money-users
+
+### Accounts Service
+
+- CLIENT_ID=api-dh-money
+- CLIENT_SECRET=XB3V2oeWqwZz9geABygfkfo2t2VxipSu
+- DB_DRIVER=com.mysql.cj.jdbc.Driver
+- DB_PASSWORD=8unkercordobA
+- DB_URL=jdbc:mysql://localhost:3306/accounts_service_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+- DB_USER=root
+- REALM_NAME=dh-money-users
+
+### Cards Service
+
+- DB_DRIVER=com.mysql.cj.jdbc.Driver
+- DB_PASSWORD=8unkercordobA
+- DB_URL=jdbc:mysql://localhost:3306/cards_service_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+- DB_USER=root
+
+### Transactions Service
+
+- DB_DRIVER=com.mysql.cj.jdbc.Driver
+- DB_PASSWORD=8unkercordobA
+- DB_URL=jdbc:mysql://localhost:3306/transactions_service_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+- DB_USER=root
+
+### Gateway
+
+- SERVER_URL=http://localhost:8080/realms/dh-money-users/protocol/openid-connect/certs
+
+### Config-server
+
+- EUREKA_HOSTNAME=localhost
+- EUREKA_URL=http://localhost:8761/eureka
 
 
 ## Funcionalidades Desarrolladas
