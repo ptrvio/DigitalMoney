@@ -5,9 +5,11 @@ Se desarrolló el backend en una arquitectura de microservicios y la seguridad s
 Además se utilizó otras tecnologías como: Git, MySQL, Docker, Postman.
 
 ## Arquitectura del proyecto
+<br>
 
 ![Arquitectura del sistema](docs/arquitectura_proyecto.png)
-
+<br>
+<br>
 ## Como correr el proyecto Local
 
 ### 1. Base de Datos
@@ -56,7 +58,6 @@ Además se utilizó otras tecnologías como: Git, MySQL, Docker, Postman.
       docker-compose up
       ```
 
-
 ## Variables de entorno
 
 ### Users Service
@@ -102,7 +103,12 @@ Además se utilizó otras tecnologías como: Git, MySQL, Docker, Postman.
 - EUREKA_HOSTNAME=localhost
 - EUREKA_URL=http://localhost:8761/eureka
 
+1. Para el correcto funcionamiento del Config-server por favor bajar los archivos y copiarlos dentro del directorio ssh (../backend/ssh). Link: https://drive.google.com/drive/folders/1P-fr2x33Nb16U7vv09149yPYYeutR4fB?usp=sharing
 
+## Documentación
+
+- [Testing Manual](docs/Testing%20Manual%20con%20Postman.xlsx)
+- [Request en Postman](  https://www.postman.com/flight-geoscientist-27537244/workspace/dhmoney)
 ## Funcionalidades Desarrolladas
 
  - Registro de usuarios (se persisten datos en las BD de Keycloak y users-service)
@@ -233,7 +239,4 @@ Si el login es exitoso entonces Keycloak proporciona un token para la sesion aus
 - Respuesta: Confirmación de la transferencia.
 
 
-## Documentación
 
-- [Testing Manual](docs/Testing%20Manual%20con%20Postman.xlsx)
-- [Request en Postman](  https://www.postman.com/flight-geoscientist-27537244/workspace/dhmoney)
